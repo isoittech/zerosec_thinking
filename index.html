@@ -79,6 +79,22 @@
     .transparent {
       opacity: 0.7; /* 透過表示 */
     }
+    .download-link {
+      margin: 20px 0;
+      font-size: 14px; /* 文字を小さく */
+    }
+
+    .download-link a {
+      color: gray; /* 色をグレーに */
+    }
+
+    .download-link a:visited {
+      color: gray; /* クリック済のリンクもグレーに */
+    }
+
+    .download-link a:hover {
+      text-decoration: none; /* ホバー時のアンダーライン無し */
+    }
   </style>
 </head>
 <body>
@@ -167,6 +183,9 @@
           </div>
           <div className="elapsed-time">{!isCountdownTransparent ? elapsedTime + " / " + updateInterval + " 秒経過" : "" }</div>
           <input type="file" accept=".json" onChange={handleFileChange} />
+          <div className="download-link">
+            ⬇️<a href="theme.sample.json" target="_blank" download>️テーマファイルサンプル</a>
+          </div>
         </div>
       );
     };
