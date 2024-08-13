@@ -46,7 +46,7 @@
       font-size: 64px;
       margin: 20px 0;
       position: relative;
-      transition: color 0.5s ease; /* 色変更のアニメーション */
+      transition: color 0.5s ease;
     }
     .countdown {
       font-size: 128px;
@@ -57,7 +57,7 @@
       transform: translate(-50%, -50%);
       white-space: nowrap;
       pointer-events: none;
-      transition: opacity 0.5s ease; /* 透過のアニメーション */
+      transition: opacity 0.5s ease;
     }
     .elapsed-time {
       font-size: 24px;
@@ -68,32 +68,46 @@
       padding: 10px 20px;
     }
     input[type="file"] {
-      margin: 20px 0 4px 0;
+      display: none;
     }
     .next-button {
       margin-right: 8px;
     }
     .warning {
-      color: red; /* 警告時の文字色 */
+      color: red;
     }
     .transparent {
-      opacity: 0.7; /* 透過表示 */
+      opacity: 0.7;
     }
     .download-link {
-      /* margin: 20px 0; */
-      font-size: 14px; /* 文字を小さく */
+      font-size: 14px;
     }
-
     .download-link a {
-      color: gray; /* 色をグレーに */
+      color: gray;
     }
-
     .download-link a:visited {
-      color: gray; /* クリック済のリンクもグレーに */
+      color: gray;
     }
-
     .download-link a:hover {
-      text-decoration: none; /* ホバー時のアンダーライン無し */
+      text-decoration: none;
+    }
+    .file-row {
+      font-size: 18px;
+      margin: 5px 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    .file-name {
+      margin-left: 10px;
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-icon {
+      cursor: pointer;
+      margin-left: 10px;
     }
   </style>
 </head>
@@ -107,23 +121,26 @@
       const [startTime, setStartTime] = React.useState(null);
       const [isWarning, setIsWarning] = React.useState(false);
       const [isCountdownTransparent, setIsCountdownTransparent] = React.useState(false);
-
-      // ランダム文字列更新間隔（秒）
-      const updateInterval = 60;
-      const warningThreshold = 10; // X秒以下で警告を表示
-      // N秒ごとにリセットする間隔
-      const resetIntervalSeconds = updateInterval + warningThreshold; // 秒数 (N秒)
-
+      const [selectedFiles, setSelectedFiles] = React.useState({
+        1: 'none',
+        2: 'none',
+        3: 'none'
+      });
+  
+      const updateInterval = 60; // ランダム文字列更新間隔（秒）
+      const warningThreshold = 10; // 警告を表示する秒数以下
+      const resetIntervalSeconds = updateInterval + warningThreshold; // N秒ごとにリセットする間隔
+  
       React.useEffect(() => {
         let timer;
         let resetTimer;
-
+  
         if (startTime !== null) {
           // 秒数をカウントするタイマー
           timer = setInterval(() => {
             const elapsed = Math.floor((Date.now() - startTime) / 1000);
             setElapsedTime(elapsed);
-            
+  
             // 残り時間が warningThreshold 秒以下になったときに警告を表示
             if (resetIntervalSeconds - (elapsed % resetIntervalSeconds) <= warningThreshold) {
               setIsWarning(true);
@@ -133,7 +150,7 @@
               setIsCountdownTransparent(false); // 透過表示を無効化
             }
           }, 1000); // 1秒ごとにカウントアップを更新
-
+  
           // 秒数経過後に経過時間をリセット
           resetTimer = setInterval(() => {
             setElapsedTime(0); // 経過時間をリセット
@@ -141,35 +158,72 @@
             getRandomString();
           }, resetIntervalSeconds * 1000); // N秒ごとにリセット
         }
-
+  
         return () => {
           clearInterval(timer); // カウントアップタイマーをクリア
           clearInterval(resetTimer); // リセットタイマーをクリア
         };
       }, [startTime]);
-
-      const handleFileChange = (event) => {
+  
+      const handleFileChange = (event, index) => {
         const file = event.target.files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const data = JSON.parse(e.target.result);
-          setStrings(data);
-          getRandomString(data); // JSON読み込み後に初回の文字列表示を実行
-          setStartTime(Date.now()); // カウント開始時刻を設定
-        };
-        reader.readAsText(file);
+        if (file && file.name.endsWith('.json')) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const data = JSON.parse(e.target.result);
+            const storageKey = `zerosec-thinking-${index}`;
+            const themeStorageKey = `zerosec-thinking`;
+  
+            // localStorageにデータを保存
+            localStorage.setItem(storageKey, JSON.stringify(data));
+            
+            // `zerosec-thinking`にファイル名を保存
+            let themeData = JSON.parse(localStorage.getItem(themeStorageKey) || '{"theme-1": "none", "theme-2": "none", "theme-3": "none"}');
+            themeData[`theme-${index}`] = file.name;
+            localStorage.setItem(themeStorageKey, JSON.stringify(themeData));
+  
+            setStrings(data); // JSONデータを保存
+            getRandomString(data); // ランダム文字列を初期表示
+            setStartTime(Date.now()); // タイマー開始
+  
+            setSelectedFiles(prevState => ({
+              ...prevState,
+              [index]: file.name
+            }));
+          };
+          reader.readAsText(file);
+        } else {
+          alert("JSONファイルを選択してください。");
+        }
       };
-
+  
       const getRandomString = (data) => {
         const stringsArray = data || strings;
         if (stringsArray.length > 0) {
           const randomIndex = Math.floor(Math.random() * stringsArray.length);
           setSelectedString(stringsArray[randomIndex]);
         } else {
-          alert("Please load a strings.json file first.");
+          alert("テーマファイルを読み込んでください。");
         }
       };
-
+  
+      const triggerFileSelect = (index) => {
+        document.getElementById(`file-input-${index}`).click();
+      };
+  
+      const loadStringsFromStorage = (index) => {
+        const storageKey = `zerosec-thinking-${index}`;
+        const data = localStorage.getItem(storageKey);
+        if (data) {
+          const parsedData = JSON.parse(data);
+          setStrings(parsedData);
+          getRandomString(parsedData);
+          setStartTime(Date.now()); // タイマー開始
+        } else {
+          alert("選択されたファイルが見つかりません。");
+        }
+      };
+  
       return (
         <div className="container">
           <h1>ゼロ秒思考テーマ:</h1>
@@ -182,15 +236,30 @@
             )}
           </div>
           <div className="elapsed-time">{!isCountdownTransparent ? elapsedTime + " / " + updateInterval + " 秒経過" : "" }</div>
-          <input type="file" accept=".json" onChange={handleFileChange} />
+          <input type="file" id="file-input-1" accept=".json" onChange={(e) => handleFileChange(e, 1)} />
+          <input type="file" id="file-input-2" accept=".json" onChange={(e) => handleFileChange(e, 2)} />
+          <input type="file" id="file-input-3" accept=".json" onChange={(e) => handleFileChange(e, 3)} />
+          <div className="file-row">
+            <a href="#" onClick={() => loadStringsFromStorage(1)}>1⃣ <span className="file-name">{selectedFiles[1]}</span></a>
+            <span className="file-icon" onClick={() => triggerFileSelect(1)}>🛠️</span>
+          </div>
+          <div className="file-row">
+            <a href="#" onClick={() => loadStringsFromStorage(2)}>2⃣ <span className="file-name">{selectedFiles[2]}</span></a>
+            <span className="file-icon" onClick={() => triggerFileSelect(2)}>🛠️</span>
+          </div>
+          <div className="file-row">
+            <a href="#" onClick={() => loadStringsFromStorage(3)}>3⃣ <span className="file-name">{selectedFiles[3]}</span></a>
+            <span className="file-icon" onClick={() => triggerFileSelect(3)}>🛠️</span>
+          </div>
           <div className="download-link">
             ⬇️<a href="theme.sample.json" target="_blank" download>️テーマファイルサンプル</a>
           </div>
         </div>
       );
     };
-
+  
     ReactDOM.render(<App />, document.getElementById('root'));
   </script>
+  
 </body>
 </html>
