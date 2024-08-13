@@ -1,0 +1,177 @@
+<!-- ####################################################################################### 
+===========================
+利用方法
+===========================
+
+1. 本HTMLをコピペしてローカルに保存
+2. 下記内容の json ファイルを用意（サンプルの theme.json でも可）
+   -----------------
+   [
+       "今日のタスク",
+       "今日やらないこと",
+       "理想の仕事内容は？",
+       "仕事を選ぶ時の基準",
+       "今の仕事を選んだ理由"
+   ]
+   -----------------
+3. [1] の HTML をブラウザで開く
+4. [2] の json を指定する
+
+※備考: theme.json のテーマは https://nanoha-log.com/zerosecond-thinking-title/#google_vignette を参照したもの🤝🙇
+############################################################################################ -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Random String Selector</title>
+  <script src="https://unpkg.com/react/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/babel-standalone/babel.min.js"></script>
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      text-align: center;
+      position: relative;
+    }
+    .random-string {
+      font-size: 64px;
+      margin: 20px 0;
+      position: relative;
+      transition: color 0.5s ease; /* 色変更のアニメーション */
+    }
+    .countdown {
+      font-size: 128px;
+      color: rgba(255, 0, 0, 0.7);
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+      pointer-events: none;
+      transition: opacity 0.5s ease; /* 透過のアニメーション */
+    }
+    .elapsed-time {
+      font-size: 24px;
+      margin: 10px 0;
+    }
+    button {
+      font-size: 24px;
+      padding: 10px 20px;
+    }
+    input[type="file"] {
+      margin: 20px 0;
+    }
+    .next-button {
+      margin-right: 8px;
+    }
+    .warning {
+      color: red; /* 警告時の文字色 */
+    }
+    .transparent {
+      opacity: 0.7; /* 透過表示 */
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const App = () => {
+      const [strings, setStrings] = React.useState([]);
+      const [selectedString, setSelectedString] = React.useState("");
+      const [elapsedTime, setElapsedTime] = React.useState(0);
+      const [startTime, setStartTime] = React.useState(null);
+      const [isWarning, setIsWarning] = React.useState(false);
+      const [isCountdownTransparent, setIsCountdownTransparent] = React.useState(false);
+
+      // ランダム文字列更新間隔（秒）
+      const updateInterval = 60;
+      const warningThreshold = 10; // X秒以下で警告を表示
+      // N秒ごとにリセットする間隔
+      const resetIntervalSeconds = updateInterval + warningThreshold; // 秒数 (N秒)
+
+      React.useEffect(() => {
+        let timer;
+        let resetTimer;
+
+        if (startTime !== null) {
+          // 秒数をカウントするタイマー
+          timer = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            setElapsedTime(elapsed);
+            
+            // 残り時間が warningThreshold 秒以下になったときに警告を表示
+            if (resetIntervalSeconds - (elapsed % resetIntervalSeconds) <= warningThreshold) {
+              setIsWarning(true);
+              setIsCountdownTransparent(true); // 透過表示を有効化
+            } else {
+              setIsWarning(false);
+              setIsCountdownTransparent(false); // 透過表示を無効化
+            }
+          }, 1000); // 1秒ごとにカウントアップを更新
+
+          // 秒数経過後に経過時間をリセット
+          resetTimer = setInterval(() => {
+            setElapsedTime(0); // 経過時間をリセット
+            setStartTime(Date.now()); // 新たにカウント開始
+            getRandomString();
+          }, resetIntervalSeconds * 1000); // N秒ごとにリセット
+        }
+
+        return () => {
+          clearInterval(timer); // カウントアップタイマーをクリア
+          clearInterval(resetTimer); // リセットタイマーをクリア
+        };
+      }, [startTime]);
+
+      const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const data = JSON.parse(e.target.result);
+          setStrings(data);
+          getRandomString(data); // JSON読み込み後に初回の文字列表示を実行
+          setStartTime(Date.now()); // カウント開始時刻を設定
+        };
+        reader.readAsText(file);
+      };
+
+      const getRandomString = (data) => {
+        const stringsArray = data || strings;
+        if (stringsArray.length > 0) {
+          const randomIndex = Math.floor(Math.random() * stringsArray.length);
+          setSelectedString(stringsArray[randomIndex]);
+        } else {
+          alert("Please load a strings.json file first.");
+        }
+      };
+
+      return (
+        <div className="container">
+          <h1>ゼロ秒思考テーマ:</h1>
+          <div className="random-string">
+            {selectedString}
+            {isCountdownTransparent && (
+              <div className={`countdown transparent`}>
+                次のテーマに変わるまで {resetIntervalSeconds - (elapsedTime % resetIntervalSeconds)} 秒
+              </div>
+            )}
+          </div>
+          <div className="elapsed-time">{!isCountdownTransparent ? elapsedTime + " / " + updateInterval + " 秒経過" : "" }</div>
+          <input type="file" accept=".json" onChange={handleFileChange} />
+        </div>
+      );
+    };
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
