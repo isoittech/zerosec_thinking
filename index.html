@@ -4,12 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>テーマ自動切替 - ゼロ秒思考ツール</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/react/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom/umd/react-dom.development.js" crossorigin></script>
   <script src="https://unpkg.com/babel-standalone/babel.min.js"></script>
   <style>
     body, html {
       height: 100%;
+      width: 100%;
       margin: 0;
       display: flex;
       flex-direction: column;
@@ -18,6 +22,7 @@
       font-family: Arial, sans-serif;
     }
     .container {
+      width: 100%;
       text-align: center;
       position: relative;
     }
@@ -59,6 +64,7 @@
       opacity: 0.7;
     }
     .download-link {
+      margin-top: 5px;
       font-size: 14px;
     }
     .download-link a {
@@ -75,7 +81,8 @@
       margin: 5px 0;
       display: flex;
       align-items: center;
-      justify-content: flex-start;
+      position: relative;
+      left:440px;
     }
     .file-name {
       margin-left: 10px;
@@ -84,14 +91,33 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    .file-name a {
+      color: gray;
+    }
+    .file-name a:visited {
+      color: gray;
+    }
+    .file-name a:hover {
+      text-decoration: none;
+    }
     .file-icon {
       cursor: pointer;
       margin-left: 10px;
     }
+    .buttons-container {
+      display: flex;
+      flex-direction: column;
+    }
+    .list-number {
+      font-family: "Cherry Bomb One", system-ui;
+      font-weight: 400;
+      font-style: normal;
+      color: rgb(46, 167, 191); /* アイコンの色を青に設定 */
+    }
   </style>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root" style="width: 100%;"></div>
   <script type="text/babel">
     const App = () => {
       const [strings, setStrings] = React.useState([]);
@@ -248,20 +274,22 @@
           <input type="file" id="file-input-1" accept=".json" onChange={(e) => handleFileChange(e, 1)} />
           <input type="file" id="file-input-2" accept=".json" onChange={(e) => handleFileChange(e, 2)} />
           <input type="file" id="file-input-3" accept=".json" onChange={(e) => handleFileChange(e, 3)} />
-          <div className="file-row">
-            <a href="#" onClick={() => loadStringsFromStorage(1)}>1⃣ <span className="file-name">{selectedFiles[1]}</span></a>
-            <span className="file-icon" onClick={() => triggerFileSelect(1)}>🛠️</span>
-          </div>
-          <div className="file-row">
-            <a href="#" onClick={() => loadStringsFromStorage(2)}>2⃣ <span className="file-name">{selectedFiles[2]}</span></a>
-            <span className="file-icon" onClick={() => triggerFileSelect(2)}>🛠️</span>
-          </div>
-          <div className="file-row">
-            <a href="#" onClick={() => loadStringsFromStorage(3)}>3⃣ <span className="file-name">{selectedFiles[3]}</span></a>
-            <span className="file-icon" onClick={() => triggerFileSelect(3)}>🛠️</span>
+          <div className="buttons-container">
+            <div className="file-row">
+              <span className="list-number">1</span><span className="file-name"><a href="#" onClick={() => loadStringsFromStorage(1)}>{selectedFiles[1]}</a></span>
+              <span className="file-icon" onClick={() => triggerFileSelect(1)}>🛠️</span>
+            </div>
+            <div className="file-row">
+              <span className="list-number">2</span><span className="file-name"><a href="#" onClick={() => loadStringsFromStorage(2)}>{selectedFiles[2]}</a></span>
+              <span className="file-icon" onClick={() => triggerFileSelect(2)}>🛠️</span>
+            </div>
+            <div className="file-row">
+              <span className="list-number">3</span><span className="file-name"><a href="#" onClick={() => loadStringsFromStorage(3)}>{selectedFiles[3]}</a></span>
+              <span className="file-icon" onClick={() => triggerFileSelect(3)}>🛠️</span>
+            </div>
           </div>
           <div className="download-link">
-            ⬇️<a href="theme.sample.json" target="_blank" download>️テーマファイルサンプル</a>
+            <span className="list-number" style={{marginRight: "10px", marginLeft: "5px"}}>⬇️</span><a href="theme.sample.json" target="_blank" download>️テーマファイルサンプル</a>
           </div>
         </div>
       );
