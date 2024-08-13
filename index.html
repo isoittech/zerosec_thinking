@@ -132,6 +132,35 @@
       const resetIntervalSeconds = updateInterval + warningThreshold; // N秒ごとにリセットする間隔
   
       React.useEffect(() => {
+        const initialize = () => {
+          const themeStorageKey = `zerosec-thinking`;
+  
+          // `zerosec-thinking`のデータを読み込む
+          const themeData = JSON.parse(localStorage.getItem(themeStorageKey) || '{"theme-1": "none", "theme-2": "none", "theme-3": "none"}');
+  
+          // 各テーマファイル名を設定
+          setSelectedFiles({
+            1: themeData["theme-1"] || 'none',
+            2: themeData["theme-2"] || 'none',
+            3: themeData["theme-3"] || 'none'
+          });
+  
+          // 初期表示時のランダム文字列対象を設定
+          const initialStorageKey = `zerosec-thinking-1`;
+          const initialData = localStorage.getItem(initialStorageKey);
+          if (initialData) {
+            const parsedData = JSON.parse(initialData);
+            setStrings(parsedData);
+            getRandomString(parsedData);
+            setStartTime(Date.now()); // タイマー開始
+          }
+        };
+  
+        // 初期化処理を実行
+        initialize();
+      }, []); // 空の依存関係配列にすることで、初期化は1回だけ行う
+  
+      React.useEffect(() => {
         let timer;
         let resetTimer;
   
@@ -163,7 +192,7 @@
           clearInterval(timer); // カウントアップタイマーをクリア
           clearInterval(resetTimer); // リセットタイマーをクリア
         };
-      }, [startTime]);
+      }, [startTime]); // startTimeが変更されたときだけ実行
   
       const handleFileChange = (event, index) => {
         const file = event.target.files[0];
@@ -182,8 +211,9 @@
             themeData[`theme-${index}`] = file.name;
             localStorage.setItem(themeStorageKey, JSON.stringify(themeData));
   
-            setStrings(data); // JSONデータを保存
-            getRandomString(data); // ランダム文字列を初期表示
+            // JSONデータを保存し、ランダム文字列を初期表示
+            setStrings(data);
+            getRandomString(data);
             setStartTime(Date.now()); // タイマー開始
   
             setSelectedFiles(prevState => ({
@@ -217,7 +247,7 @@
         if (data) {
           const parsedData = JSON.parse(data);
           setStrings(parsedData);
-          getRandomString(parsedData);
+          getRandomString(parsedData); // stringsを更新後にランダム文字列を設定
           setStartTime(Date.now()); // タイマー開始
         } else {
           alert("選択されたファイルが見つかりません。");
@@ -260,6 +290,5 @@
   
     ReactDOM.render(<App />, document.getElementById('root'));
   </script>
-  
 </body>
 </html>
